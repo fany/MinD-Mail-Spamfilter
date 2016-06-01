@@ -1,0 +1,13 @@
+* Mails doch vernünftig mit Mail::Box o. Ä. parsen, um insbesondere den Body
+  unabhängig von seinem Transfer-Encoding besser analysieren zu können.
+
+* Evtl. einige Regeln von Mail::SpamAssassin als zusätzliches Kriterium
+  heranziehen.
+
+* Oder den ganzen Filter auf Mail::SpamAssassin umkrempeln,
+  also die eigenen Regln in in SpamAssassin-Regeln verwandeln.
+
+* Tools zum Aussortieren der Mails aus /var/qmail/quarantine/pending/
+  bereitstellen.
+  (Bislang mache ich das mit "less"/"mkdir"/"mv",
+  weil es hinreichend selten notwendig ist.)

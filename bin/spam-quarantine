@@ -1,0 +1,157 @@
+#!perl
+
+use 5.014;
+use utf8;
+use warnings;
+
+use Digest::SHA1 qw(sha1_hex);
+use FindBin qw();
+use Getopt::Long qw(GetOptions);
+use MinD::Mail::Spamfilter qw(
+  QUARANTINE_PATH
+  read_body
+  read_header
+  score
+  spamdir
+);
+use Path::Tiny qw(path);
+
+GetOptions
+  'help|?' => sub { exec perldoc => -F => $0 or die "exec perldoc: $!\n" },
+  or exit 1;
+
+use constant {
+    EXIT_SUCCESS         => 0,
+    EXIT_SUCCESS_ABORT   => 99,
+    EXIT_PERMANENT_ERROR => 100,
+    EXIT_SOFT_ERROR      => 111,
+};
+
+$SIG{__DIE__} = sub {
+    print STDERR @_;
+    exit EXIT_SOFT_ERROR;
+};
+
+my $ar_header = read_header;
+my $unique_id = sha1_hex(@$ar_header);
+
+if ( path( QUARANTINE_PATH, ham => $unique_id )->exists ) {
+    exit EXIT_SUCCESS;
+}
+elsif ( path( spamdir, $unique_id )->exists ) {
+    reject_as_spam()
+}
+elsif ( path( QUARANTINE_PATH, pending => $unique_id )->exists ) {
+    warn "already in quarantine\n";
+    exit EXIT_SOFT_ERROR;
+}
+elsif ( ( my $score = score( $ar_header, my $ar_body = read_body ) ) < 3 ) {
+    exit EXIT_SUCCESS;
+}
+elsif ( $score >= 5 ) {
+    ( my $spamdir = spamdir )->mkpath;
+    save_in( $spamdir, $unique_id, $ar_header, $ar_body );
+    reject_as_spam();
+}
+else {
+    save_in(
+        path( QUARANTINE_PATH, 'pending' ) => $unique_id,
+        $ar_header, $ar_body
+    );
+    warn "held for quarantine\n";
+    exit EXIT_SOFT_ERROR;
+}
+
+sub reject_as_spam {
+    print <<_;
+Deine E-Mail an die o.g. Liste wurde abgewiesen,
+da sie nach einem bekannten Typ von Spam aussieht.
+Es ist zu befuerchten, dass sich jemand Deines Adressbuchs bemaechtigt hat.
+Falls Du Naeheres ueber die Hintergruende dazu herausbekommst,
+wuerden wir uns ueber entsprechende Informationen freuen.
+Bitte wende Dich auch an uns, falls Deine E-Mail faelschlicherweise
+aussortiert worden sein sollte.
+				-- Martin H. Sluka <webteam\@mensa.de>
+_
+    exit EXIT_PERMANENT_ERROR;
+}
+
+sub save_in {
+    my ( $dir, $file, $ar_header, $ar_body ) = @_;
+    my $qfile = path( $dir, $unique_id );
+    open my $fh, '>', $qfile or die "Cannot create $qfile: $!\n";
+    say $fh "$_=$ENV{$_}" for sort keys %ENV;
+    say $fh '----';
+    say $fh @$ar_header;
+    print $fh @$ar_body;
+    close $fh or die "Error writing to $qfile: $!\n";
+}
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+spam-quarantine - Spam-Filter für mensa.de-Mailinglisten als qmail-MDA
+
+=head1 BESCHREIBUNG
+
+Implementiert einen Spam-Filter mit Quarantäne-Funktion als qmail-MDA.
+
+Erwartet den Quelltext einer E-Mail auf der Standardeingabe.
+Tut dann Folgendes:
+
+=over 4
+
+=item 1.
+
+Wenn die E-Mail bereits (nachdem sie in Quarantäne lag) manuell als Ham
+beurteilt wurde, beendet sich das Programm mit Exit-Code 0, damit die E-Mail
+zugestellt wird.
+
+=item 2.
+
+Wenn die E-Mail (nachdem sie in Quarantäne lag) manuell als Spam beurteilt
+wurde, gibt das Programm eine entsprechende Meldung aus und beendet sich mit
+Exit-Code 100, damit die Mail gebounct wird.
+
+=item 3.
+
+Wenn die E-Mail schon/noch in Quarantäne liegt, beendet sich das Programm mit
+Exit-Code 111, damit sie weiter in der Mail-Queue liegen bleibt und später ein
+erneuter Zustellversuch erfolgt.
+
+=item 4.
+
+Die Mail wird also zum ersten Mal verarbeitet.
+Nun wird sie heuristisch (s. L<MinD::Mail::Spamfilter>) genauer untersucht.
+
+Falls sie klar nach Ham aussieht, beendet sich das Programm mit Exit-Code 0,
+damit die E-Mail normal weiter zugestellt wird.
+
+=item 5.
+
+Falls sie klar nach Spam aussieht, wird, falls es noch nicht existiert,
+das Verzeichnis /var/qmail/quarantine/spam/$sender angelegt und darin unter
+dem Hash-Wert des Mail-Quelltexts eine Datei mit einem Bericht und dem
+Quelltext der Mail.
+Danach passiert das Gleiche wie im Fall 2., damit die Mail gebounct wird.
+
+=item 6.
+
+Falls es sich um einen Zweifelsfall handelt, wird eine Datei
+/var/qmail/quarantine/pending/$hash angelegt, mit dem Inhalt analog zu 5.
+
+=back
+
+=head1 OPTIONEN
+
+=over 4
+
+=item -help
+
+(nur) diese Dokumentation ausgeben
+
+=back
+

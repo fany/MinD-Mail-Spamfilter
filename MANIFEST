@@ -1,0 +1,14 @@
+bin/spam-quarantine
+bin/spam-quarantine2mbox
+bin/spam-score
+bin/strip_quarantined_mail
+Changes
+lib/MinD/Mail/Spamfilter.pm
+Makefile.PL
+MANIFEST			This list of files
+README
+t/00-load.t
+t/manifest.t
+ToDo
+t/pod-coverage.t
+t/pod.t

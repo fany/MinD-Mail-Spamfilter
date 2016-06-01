@@ -1,0 +1,59 @@
+#!perl
+
+use 5.014;
+use warnings;
+
+use Getopt::Long qw(GetOptions);
+use Path::Tiny qw(path);
+
+GetOptions
+  'help|?' => sub { exec perldoc => -F => $0 or die "exec perldoc: $!\n" },
+  or exit 1;
+
+die "USAGE: $0 <quarantine-file>+\n" unless @ARGV;
+
+for (@ARGV) {
+    my $fh = path($_)->openr;
+    my $fromline;
+    while (<$fh>) {
+        if (/^UFLINE=(.*)/) { $fromline = $1 }
+        elsif (/^----$/) { last }
+    }
+    die "$_: No marker found.\n" if eof $fh;
+    die "$_: No fromline found.\n" unless defined $fromline;
+    say $fromline;
+    local $/;
+    print my $body = <$fh>;
+    say '' if $body !~ /\n\n\z/;
+}
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+spam-quarantine2mbox - gibt die Mails aus Spam-Quarantäne-Dateien als Mbox aus
+
+=head1 SYNOPSE
+
+    cd /var/qmail/quarantine/spam
+    spam-quarantine2mbox * | ...
+
+=head1 BESCHREIBUNG
+
+Gibt die Mail-Quelltexte aus den namentlich über die Kommandozeile angegebenen
+Dateien aus der Spam-Quarantäne als Mbox aus.
+Das ist beispielsweise hilfreich, wenn man sie mit C<bogofilter -M>
+weiterverarbeiten möchte.
+
+=head1 OPTIONEN
+
+=over 4
+
+=item -help
+
+(nur) diese Dokumentation ausgeben
+
+=back
+

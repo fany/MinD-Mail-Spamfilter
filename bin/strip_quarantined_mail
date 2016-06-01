@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Gibt den Mail-Quelltext aus einer Quarantäne-Datei aus.
+
+exec sed '0,/^----$/d' "$@"

@@ -1,0 +1,72 @@
+#!perl
+
+use 5.014;
+use warnings;
+
+use Getopt::Long qw(GetOptions);
+use MinD::Mail::Spamfilter qw(score);
+
+GetOptions(
+    'details'           => \my $Details,
+    'quarantine-format' => \my $QuarantineFormat,
+) or exit 1;
+
+if ($QuarantineFormat) {
+    while (<STDIN>) {
+        last if /^----$/;
+        next unless /\S/;
+        /^(.*?)=(.*)/ or die "Unknown data at line $.: $_";
+        $ENV{$1} = $2;
+    }
+}
+
+my ( $score, $score4 ) = score;
+
+say $score;
+if ($Details) {
+    say "$score4->{$_} $_"
+      for sort { $score4->{$b} <=> $score4->{$a} || $a cmp $b } keys %$score4;
+}
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+spam-score - testweise Spam-Score für eine Mail berechnen
+
+=head1 SYNOPSE
+
+    spam-score <file
+
+Gibt den Spam-Score der auf der Standardeingabe übergebenen Mail auf die
+Standardausgabe aus
+
+=head1 BESCHREIBUNG
+
+Gibt die Mail-Quelltexte aus den namentlich über die Kommandozeile angegebenen
+Dateien aus der Spam-Quarantäne als Mbox aus.
+Das ist beispielsweise hilfreich, wenn man sie mit C<bogofilter -M>
+weiterverarbeiten möchte.
+
+=head1 OPTIONEN
+
+=over 4
+
+=item -details
+
+zusätzlich Details zu den Gründen ausgeben
+
+=item -quarantine-format
+
+Diese Option muss verwendet werden, wenn auf der Standardeingiabe kein reiner
+Mail-Quelltext übergeben wird sondern der Inhalt einer Datei aus der Quarantäne;
+das Programm extrahiert daraus dann den Mail-Quelltext.
+
+=item -help
+
+(nur) diese Dokumentation ausgeben
+
+=back
+
