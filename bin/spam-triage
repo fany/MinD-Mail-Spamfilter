@@ -1,0 +1,29 @@
+#!/bin/bash -e
+
+readonly prefix=/var/qmail/quarantine/
+for mail in "$prefix/pending/"*; do
+    tmpmbox=$(mktemp)
+    spam-quarantine2mbox "$mail" >"$tmpmbox"
+    mutt -f "$tmpmbox"
+    rm "$tmpmbox"
+    while :; do
+        echo -n '(H)am oder (S)pam? '
+        read decision
+        case "$decision" in
+            H|h)
+                mv "$mail" "$prefix/ham/"
+                break
+                ;;
+            S|s)
+                sender=$(sed -n '/^SENDER=/s/^SENDER=//p' "$mail" | tr [:upper:] [:lower:] | head -1)
+                spamdir="$prefix/spam/$sender"
+                if ! test -d "$spamdir"; then
+                    mkdir -m 1700 "$spamdir"
+                    chown vpopmail: "$spamdir"
+                fi
+                mv "$mail" "$spamdir/"
+                break
+                ;;
+        esac
+    done
+done

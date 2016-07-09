@@ -46,14 +46,16 @@ Man möchte da ab und zu mal reinschauen und sich evtl. durch einen cronjob
 darauf hinweisen lassen, wenn sich da Mails ansammeln, damit man das nicht
 vergisst.
 
-Finden sich dort Falsch-Positive, bitte die entsprechenden Dateien nach
-/var/qmail/quarantine/ham/ verschieben.
-Die noch in der Queue befindliche Mail wird dann beim nächsten Zustellversuch
-"durchgelassen".
+Dazu kann man das Tool spam-triage verwenden, das Mail für Mail in mutt
+anzeigt und hinterher fragt, ob die Mail Ham oder Spam ist.
 
-Dateien mit zurecht für Spam gehaltenen E-Mails bitte nach
-/var/qmail/quarantine/spam/$sender_in_kleinbuchstaben/ verschieben
-(und dieses Verzeichnis vorher anlegen, falls es noch nicht existiert).
+Etwaige Falsch-Positive (Ham) würde es nach /var/qmail/quarantine/ham/
+verschieben. Die noch in der Queue befindliche Mail wird dann beim nächsten
+Zustellversuch "durchgelassen".
+
+Dateien mit zurecht für Spam gehaltenen E-Mails werden nach
+/var/qmail/quarantine/spam/$sender_in_kleinbuchstaben/ verschoben
+(und dieses Verzeichnis zuvor angelegt, falls es noch nicht existierte).
 Die noch gequeuete Mail wird dann beim nächsten Zustellversuch abgewiesen.
 
 Mit "ls /var/qmail/quarantine/spam" kann man bei Interesse herausfinden,
