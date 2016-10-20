@@ -54,7 +54,7 @@ sub score {
     ++$score4{'many recipients'} if $mh->normalized('To') =~ y/,// > 3;
     ++$score4{'many recipients'} if $mh->normalized('To') =~ y/,// > 6;
     ++$score4{'content language'}
-      if $mh->normalized('Content-Language') eq 'en-us';
+      if $mh->normalized('Content-Language') =~ /^(?:en-(?:ca|us)|es)$/;
     ++$score4{charset} if 1 < grep /\bcharset="us-ascii"/, @$ar_body;
 
     # Das funktioniert so natürlich nur, wenn die Mail nicht unterwegs
