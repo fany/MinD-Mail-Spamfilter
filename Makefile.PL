@@ -5,7 +5,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME      => 'MinD::Mail::Spamfilter',
     AUTHOR    => q{Martin H. Sluka <martin@sluka.de>},
-    VERSION   => 1.2,
+    VERSION   => 1.3,
     EXE_FILES => [
         qw{
           bin/spam-quarantine
