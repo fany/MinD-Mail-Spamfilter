@@ -1,0 +1,48 @@
+loadplugin Mail::SpamAssassin::Plugin::Check
+
+# Einstellungen, die zum Teil evtl. erst greifen,
+# wenn weitere Plugins eingeschaltet werden:
+dns_available			yes
+use_bayes			0
+use_auto_whitelist		0
+score RCVD_IN_BRBL_LASTEXT	0
+score RCVD_IN_PBL		0
+score RCVD_IN_SORBS_HTTP	0
+score RCVD_IN_SORBS_SOCKS	0
+
+# Mensa-eigene Regeln:
+header   MIND_CONTENT_LANGUAGE	Content-Language =~ /^(?!de\w|es-MX$|i-default$)./i
+score    MIND_CONTENT_LANGUAGE	1
+describe MIND_CONTENT_LANGUAGE	Unusual content language used
+
+header   MIND_SUBJECT		Subject =~ /\bFw:\s+(?:try\s+it\s+out|important|news|read\s+this|new\s+(?:important\s+)?message)\b|^something new, don't miss up$/
+score    MIND_SUBJECT		2
+describe MIND_SUBJECT		Has a subject which is commonly used in spam messages
+
+header   MIND_SUBJECT_PREFIX	Subject =~ /\bFw:\s+/
+score    MIND_SUBJECT_PREFIX	1
+describe MIND_SUBJECT_PREFIX	Subject has forwarding prefix
+
+header   MIND_MANY_RECIPIENTS	To =~ /,.*,.*,.*,/
+score    MIND_MANY_RECIPIENTS   1
+describe MIND_MANY_RECIPIENTS   Has at least five recipients
+
+rawbody  MIND_BODY		/\A.*\n+.* <http:\/\/\S+>\n+.*\n*\z/
+score    MIND_BODY              2
+describe MIND_BODY              Has body of a typical spam message
+
+rawbody  MIND_CHARSET		/; charset=us-ascii\b/
+score    MIND_CHARSET		1
+describe MIND_CHARSET		Has character set us-ascii
+
+rawbody  MIND_MSWORD            /<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas\b/
+score    MIND_MSWORD            1
+
+# für blacklist_from-Regeln:
+#loadplugin Mail::SpamAssassin::Plugin::WLBLEval
+#score USER_IN_BLACKLIST 2
+
+loadplugin MinD::Mail::Spamfilter::Plugin::SenderBlacklist
+header   MIND_KNOWN_SPAM_SENDER	eval:check_sender_blacklist()
+score    MIND_KNOWN_SPAM_SENDER 2
+describe MIND_KNOWN_SPAM_SENDER known spam Sender

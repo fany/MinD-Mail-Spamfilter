@@ -1,11 +1,11 @@
 use 5.014;
 use warnings FATAL => 'all';
-use ExtUtils::MakeMaker;
+use inc::Module::Install;
 
 WriteMakefile(
     NAME      => 'MinD::Mail::Spamfilter',
     AUTHOR    => q{Martin H. Sluka <martin@sluka.de>},
-    VERSION   => 1.3,
+    VERSION   => 2.0,
     EXE_FILES => [
         qw{
           bin/spam-quarantine
@@ -25,11 +25,15 @@ WriteMakefile(
         'Test::More' => 0,
     },
     PREREQ_PM => {
-        'Digest::SHA1' => 0,
-        'List::Util'   => 0,
-        'Mail::Header' => 0,
-        'Path::Tiny'   => 0,
+        'Digest::SHA1'       => 0,
+        'File::Share'        => 0,
+        'List::Util'         => 0,
+        'Mail::SpamAssassin' => 3.004001,
+        'Path::Tiny'         => 0,
     },
-    dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean => { FILES    => 'MinD-Mail-Spamfilter-*' },
+    dist     => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
+    clean    => { FILES    => 'MinD-Mail-Spamfilter-*' },
+    PERM_DIR => '755',
 );
+
+install_share;

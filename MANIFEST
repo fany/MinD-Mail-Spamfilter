@@ -1,9 +1,12 @@
 bin/spam-quarantine
 bin/spam-quarantine2mbox
 bin/spam-score
+bin/spam-triage
 bin/strip_quarantined_mail
 Changes
 lib/MinD/Mail/Spamfilter.pm
+lib/MinD/Mail/Spamfilter/Plugin/SenderBlacklist.pm
+share/sa-rules
 Makefile.PL
 MANIFEST			This list of files
 README
